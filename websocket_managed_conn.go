@@ -11,9 +11,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/slack-go/slack/internal/backoff"
-	"github.com/slack-go/slack/internal/errorsx"
-	"github.com/slack-go/slack/internal/timex"
+	"github.com/rusq/slack/internal/backoff"
+	"github.com/rusq/slack/internal/errorsx"
+	"github.com/rusq/slack/internal/timex"
 )
 
 // UnmappedError represents error occurred when there is no mapping between given event name

@@ -18,8 +18,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/slack-go/slack"
 	"time"
+
+	"github.com/rusq/slack"
 )
 
 func generateModalRequest() slack.ModalViewRequest {
@@ -86,7 +87,7 @@ func updateModal() slack.ModalViewRequest {
 }
 
 // This was taken from the slash example
-// https://github.com/slack-go/slack/blob/master/examples/slash/slash.go
+// https://github.com/rusq/slack/blob/master/examples/slash/slash.go
 func verifySigningSecret(r *http.Request) error {
 	signingSecret := "YOUR_SIGNING_SECRET_HERE"
 	verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
