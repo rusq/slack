@@ -2,8 +2,22 @@ Slack API in Go [![Go Reference](https://pkg.go.dev/badge/github.com/slack-go/sl
 ===============
 
 > [!NOTE]
+> 
 > This fork contains some changes needed for [Slackdump](https://github.com/rusq/slackdump)
-> It may not be suitable for your use case.
+> It may not be suitable for your use case.  I created it only to use some
+> changes that are still pending to be merged to the upstream.
+> 
+> You're welcome to use it, but please don't expect any support, submit your
+> PRs to the [upstream] instead.
+
+[upstream]: https://github.com/slack-go/slack
+
+<details>
+<summary>Changes in this fork:</summary>
+
+- Implemented `rich_text_quote` and `rich_text_preformatted` (upstream PR: https://github.com/slack-go/slack/pull/1260).
+</details>
+
 
 ---
 
