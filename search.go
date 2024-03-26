@@ -12,6 +12,7 @@ const (
 	DEFAULT_SEARCH_HIGHLIGHT = false
 	DEFAULT_SEARCH_COUNT     = 20
 	DEFAULT_SEARCH_PAGE      = 1
+	DEFAULT_SEARCH_CURSOR    = ""
 )
 
 type SearchParameters struct {
@@ -20,6 +21,7 @@ type SearchParameters struct {
 	Highlight     bool
 	Count         int
 	Page          int
+	Cursor        string
 }
 
 type CtxChannel struct {
@@ -85,6 +87,7 @@ func NewSearchParameters() SearchParameters {
 		Highlight:     DEFAULT_SEARCH_HIGHLIGHT,
 		Count:         DEFAULT_SEARCH_COUNT,
 		Page:          DEFAULT_SEARCH_PAGE,
+		Cursor:        DEFAULT_SEARCH_CURSOR,
 	}
 }
 
@@ -107,6 +110,9 @@ func (api *Client) _search(ctx context.Context, path, query string, params Searc
 	}
 	if params.Page != DEFAULT_SEARCH_PAGE {
 		values.Add("page", strconv.Itoa(params.Page))
+	}
+	if params.Cursor != "" {
+		values.Add("cursor", params.Cursor)
 	}
 
 	response = &searchResponseFull{}

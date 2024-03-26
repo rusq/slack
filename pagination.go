@@ -11,10 +11,11 @@ type Paging struct {
 // Pagination contains pagination information
 // This is different from Paging in that it contains additional details
 type Pagination struct {
-	TotalCount int `json:"total_count"`
-	Page       int `json:"page"`
-	PerPage    int `json:"per_page"`
-	PageCount  int `json:"page_count"`
-	First      int `json:"first"`
-	Last       int `json:"last"`
+	TotalCount int    `json:"total_count"`
+	Page       int    `json:"page"`
+	PerPage    int    `json:"per_page"`
+	PageCount  int    `json:"page_count"`
+	First      int    `json:"first"`
+	Last       int    `json:"last"`
+	NextCursor string `json:"next_cursor,omitempty"`
 }
