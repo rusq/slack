@@ -36,11 +36,11 @@ type CtxChannel struct {
 }
 
 type CtxMessage struct {
-	User      string `json:"user"`
-	Username  string `json:"username"`
-	Text      string `json:"text"`
-	Timestamp string `json:"ts"`
-	Type      string `json:"type"`
+	User      string `json:"user,omitempty"`
+	Username  string `json:"username,omitempty"`
+	Text      string `json:"text,omitempty"`
+	Timestamp string `json:"ts,omitempty"`
+	Type      string `json:"type,omitempty"`
 }
 
 type SearchMessage struct {
@@ -51,12 +51,12 @@ type SearchMessage struct {
 	Timestamp   string       `json:"ts"`
 	Blocks      Blocks       `json:"blocks,omitempty"`
 	Text        string       `json:"text"`
-	Permalink   string       `json:"permalink"`
-	Attachments []Attachment `json:"attachments"`
-	Previous    CtxMessage   `json:"previous"`
-	Previous2   CtxMessage   `json:"previous_2"`
-	Next        CtxMessage   `json:"next"`
-	Next2       CtxMessage   `json:"next_2"`
+	Permalink   string       `json:"permalink,omitempty"`
+	Attachments []Attachment `json:"attachments,omitempty"`
+	Previous    CtxMessage   `json:"previous,omitempty"`
+	Previous2   CtxMessage   `json:"previous_2,omitempty"`
+	Next        CtxMessage   `json:"next,omitempty"`
+	Next2       CtxMessage   `json:"next_2,omitempty"`
 }
 
 type SearchMessages struct {
