@@ -16,6 +16,7 @@ const (
 )
 
 type SearchParameters struct {
+	TeamID        string
 	Sort          string
 	SortDirection string
 	Highlight     bool
@@ -95,6 +96,9 @@ func (api *Client) _search(ctx context.Context, path, query string, params Searc
 	values := url.Values{
 		"token": {api.token},
 		"query": {query},
+	}
+	if params.TeamID != "" {
+		values.Add("team_id", params.TeamID)
 	}
 	if params.Sort != DEFAULT_SEARCH_SORT {
 		values.Add("sort", params.Sort)
