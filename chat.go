@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -226,11 +226,11 @@ func (api *Client) SendMessageContext(ctx context.Context, channelID string, opt
 	}
 
 	if api.Debug() {
-		reqBody, err := ioutil.ReadAll(req.Body)
+		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			return "", "", "", err
 		}
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+		req.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 		api.Debugf("Sending request: %s", redactToken(reqBody))
 	}
 
@@ -377,6 +377,7 @@ func (t responseURLSender) BuildRequestContext(ctx context.Context) (*http.Reque
 	req, err := jsonReq(ctx, t.endpoint, Msg{
 		Text:            t.values.Get("text"),
 		Timestamp:       t.values.Get("ts"),
+		ThreadTimestamp: t.values.Get("thread_ts"),
 		Attachments:     t.attachments,
 		Blocks:          t.blocks,
 		Metadata:        t.metadata,
