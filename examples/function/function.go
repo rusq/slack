@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 	"os"
+
+	"github.com/rusq/slack"
+	"github.com/rusq/slack/slackevents"
+	"github.com/rusq/slack/socketmode"
 )
 
 func main() {
