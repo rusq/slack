@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -82,6 +83,15 @@ const (
 		]
 	}`
 )
+
+func TestNewRichTextBlock(t *testing.T) {
+	richTextBlock := NewRichTextBlock("test_block")
+
+	assert.Equal(t, richTextBlock.BlockType(), MBTRichText)
+	assert.Equal(t, string(richTextBlock.Type), "rich_text")
+	assert.Equal(t, richTextBlock.BlockID, "test_block")
+	assert.Equal(t, richTextBlock.ID(), "test_block")
+}
 
 func TestRichTextBlock_UnmarshalJSON(t *testing.T) {
 	cases := []struct {
@@ -184,6 +194,16 @@ func TestRichTextSection_UnmarshalJSON(t *testing.T) {
 			RichTextSection{
 				Type:     RTESection,
 				Elements: []RichTextSectionElement{},
+			},
+			nil,
+		},
+		{
+			[]byte(`{"type": "rich_text_section","elements":[{"type": "emoji","name": "+1"}]}`),
+			RichTextSection{
+				Type: RTESection,
+				Elements: []RichTextSectionElement{
+					&RichTextSectionEmojiElement{Type: RTSEEmoji, Name: "+1"},
+				},
 			},
 			nil,
 		},
@@ -299,7 +319,7 @@ func TestRichTextList_UnmarshalJSON(t *testing.T) {
 
 func TestRichTextQuote_Marshal(t *testing.T) {
 	t.Run("rich_text_section", func(t *testing.T) {
-		const rawRSE = "{\"type\":\"rich_text_section\",\"elements\":[{\"type\":\"text\",\"text\":\"Some Text\"}]}"
+		const rawRSE = "{\"type\":\"rich_text_section\",\"elements\":[{\"type\":\"text\",\"text\":\"Some Text\"},{\"type\":\"emoji\",\"name\":\"+1\"},{\"type\":\"emoji\",\"name\":\"+1\",\"skin_tone\":2}]}"
 
 		var got RichTextSection
 		if err := json.Unmarshal([]byte(rawRSE), &got); err != nil {
@@ -309,6 +329,8 @@ func TestRichTextQuote_Marshal(t *testing.T) {
 			Type: RTESection,
 			Elements: []RichTextSectionElement{
 				&RichTextSectionTextElement{Type: RTSEText, Text: "Some Text"},
+				&RichTextSectionEmojiElement{Type: RTSEEmoji, Name: "+1"},
+				&RichTextSectionEmojiElement{Type: RTSEEmoji, Name: "+1", SkinTone: 2},
 			},
 		}
 

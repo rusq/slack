@@ -12,6 +12,35 @@ type EventsAPIInnerEvent struct {
 	Data interface{}
 }
 
+// AssistantThreadMessageEvent is an (inner) EventsAPI subscribable event.
+type AssistantThreadStartedEvent struct {
+	Type            string          `json:"type"`
+	AssistantThread AssistantThread `json:"assistant_thread"`
+	EventTimestamp  string          `json:"event_ts"`
+}
+
+// AssistantThreadChangedEvent is an (inner) EventsAPI subscribable event.
+type AssistantThreadContextChangedEvent struct {
+	Type            string          `json:"type"`
+	AssistantThread AssistantThread `json:"assistant_thread"`
+	EventTimestamp  string          `json:"event_ts"`
+}
+
+// AssistantThread is an object that represents a thread of messages between a user and an assistant.
+type AssistantThread struct {
+	UserID          string                 `json:"user_id"`
+	Context         AssistantThreadContext `json:"context"`
+	ChannelID       string                 `json:"channel_id"`
+	ThreadTimeStamp string                 `json:"thread_ts"`
+}
+
+// AssistantThreadContext is an object that represents the context of an assistant thread.
+type AssistantThreadContext struct {
+	ChannelID    string `json:"channel_id"`
+	TeamID       string `json:"team_id"`
+	EnterpriseID string `json:"enterprise_id"`
+}
+
 // AppMentionEvent is an (inner) EventsAPI subscribable event.
 type AppMentionEvent struct {
 	Type            string `json:"type"`
@@ -255,9 +284,8 @@ type MessageEvent struct {
 	SourceTeam string `json:"source_team,omitempty"`
 
 	// Edited Message
-	Message         *MessageEvent `json:"message,omitempty"`
-	PreviousMessage *MessageEvent `json:"previous_message,omitempty"`
-	Edited          *Edited       `json:"edited,omitempty"`
+	Message         *slack.Message `json:"message,omitempty"`
+	PreviousMessage *slack.Message `json:"previous_message,omitempty"`
 
 	// Deleted Message
 	DeletedTimeStamp string `json:"deleted_ts,omitempty"`
@@ -269,19 +297,6 @@ type MessageEvent struct {
 	BotID    string `json:"bot_id,omitempty"`
 	Username string `json:"username,omitempty"`
 	Icons    *Icon  `json:"icons,omitempty"`
-
-	Upload bool   `json:"upload"`
-	Files  []File `json:"files"`
-
-	Blocks      slack.Blocks       `json:"blocks,omitempty"`
-	Attachments []slack.Attachment `json:"attachments,omitempty"`
-
-	Metadata slack.SlackMetadata `json:"metadata,omitempty"`
-
-	// Root is the message that was broadcast to the channel when the SubType is
-	// thread_broadcast. If this is not a thread_broadcast message event, this
-	// value is nil.
-	Root *MessageEvent `json:"root"`
 }
 
 // MemberJoinedChannelEvent A member joined a public or private channel
@@ -374,14 +389,6 @@ type EmojiChangedEvent struct {
 	Value string `json:"value,omitempty"`
 }
 
-// WorkflowStepExecuteEvent is fired, if a workflow step of your app is invoked
-type WorkflowStepExecuteEvent struct {
-	Type           string            `json:"type"`
-	CallbackID     string            `json:"callback_id"`
-	WorkflowStep   EventWorkflowStep `json:"workflow_step"`
-	EventTimestamp string            `json:"event_ts"`
-}
-
 // MessageMetadataPostedEvent is sent, if a message with metadata is posted
 type MessageMetadataPostedEvent struct {
 	Type             string               `json:"type"`
@@ -421,15 +428,6 @@ type MessageMetadataDeletedEvent struct {
 	TeamId           string               `json:"team_id"`
 	MessageTimestamp string               `json:"message_ts"`
 	DeletedTimestamp string               `json:"deleted_ts"`
-}
-
-type EventWorkflowStep struct {
-	WorkflowStepExecuteID string                      `json:"workflow_step_execute_id"`
-	WorkflowID            string                      `json:"workflow_id"`
-	WorkflowInstanceID    string                      `json:"workflow_instance_id"`
-	StepID                string                      `json:"step_id"`
-	Inputs                *slack.WorkflowStepInputs   `json:"inputs,omitempty"`
-	Outputs               *[]slack.WorkflowStepOutput `json:"outputs,omitempty"`
 }
 
 // JSONTime exists so that we can have a String method converting the date
@@ -957,11 +955,11 @@ type FunctionExecutedEvent struct {
 		DateUpdated int64  `json:"date_updated"`
 		DateDeleted int64  `json:"date_deleted"`
 	} `json:"function"`
-	Inputs              map[string]string `json:"inputs"`
-	FunctionExecutionID string            `json:"function_execution_id"`
-	WorkflowExecutionID string            `json:"workflow_execution_id"`
-	EventTs             string            `json:"event_ts"`
-	BotAccessToken      string            `json:"bot_access_token"`
+	Inputs              map[string]interface{} `json:"inputs"`
+	FunctionExecutionID string                 `json:"function_execution_id"`
+	WorkflowExecutionID string                 `json:"workflow_execution_id"`
+	EventTs             string                 `json:"event_ts"`
+	BotAccessToken      string                 `json:"bot_access_token"`
 }
 
 type InviteRequestedEvent struct {
@@ -1117,6 +1115,10 @@ const (
 	AppHomeOpened = EventsAPIType("app_home_opened")
 	// AppUninstalled Your Slack app was uninstalled.
 	AppUninstalled = EventsAPIType("app_uninstalled")
+	// AssistantThreadStarted Your Slack AI Assistant has started a new thread
+	AssistantThreadStarted = EventsAPIType("assistant_thread_started")
+	// AssistantThreadContextChanged Your Slack AI Assistant has changed the context of a thread
+	AssistantThreadContextChanged = EventsAPIType("assistant_thread_context_changed")
 	// ChannelCreated is sent when a new channel is created.
 	ChannelCreated = EventsAPIType("channel_created")
 	// ChannelDeleted is sent when a channel is deleted.
@@ -1273,81 +1275,82 @@ const (
 // implementations. The structs should be instances of the unmarshalling
 // target for the matching event type.
 var EventsAPIInnerEventMapping = map[EventsAPIType]interface{}{
-	AppMention:                   AppMentionEvent{},
-	AppHomeOpened:                AppHomeOpenedEvent{},
-	AppUninstalled:               AppUninstalledEvent{},
-	ChannelCreated:               ChannelCreatedEvent{},
-	ChannelDeleted:               ChannelDeletedEvent{},
-	ChannelArchive:               ChannelArchiveEvent{},
-	ChannelUnarchive:             ChannelUnarchiveEvent{},
-	ChannelLeft:                  ChannelLeftEvent{},
-	ChannelRename:                ChannelRenameEvent{},
-	ChannelIDChanged:             ChannelIDChangedEvent{},
-	FileChange:                   FileChangeEvent{},
-	FileDeleted:                  FileDeletedEvent{},
-	FileShared:                   FileSharedEvent{},
-	FileUnshared:                 FileUnsharedEvent{},
-	GroupDeleted:                 GroupDeletedEvent{},
-	GroupArchive:                 GroupArchiveEvent{},
-	GroupUnarchive:               GroupUnarchiveEvent{},
-	GroupLeft:                    GroupLeftEvent{},
-	GroupRename:                  GroupRenameEvent{},
-	GridMigrationFinished:        GridMigrationFinishedEvent{},
-	GridMigrationStarted:         GridMigrationStartedEvent{},
-	LinkShared:                   LinkSharedEvent{},
-	Message:                      MessageEvent{},
-	MemberJoinedChannel:          MemberJoinedChannelEvent{},
-	MemberLeftChannel:            MemberLeftChannelEvent{},
-	PinAdded:                     PinAddedEvent{},
-	PinRemoved:                   PinRemovedEvent{},
-	ReactionAdded:                ReactionAddedEvent{},
-	ReactionRemoved:              ReactionRemovedEvent{},
-	SharedChannelInviteApproved:  SharedChannelInviteApprovedEvent{},
-	SharedChannelInviteAccepted:  SharedChannelInviteAcceptedEvent{},
-	SharedChannelInviteDeclined:  SharedChannelInviteDeclinedEvent{},
-	SharedChannelInviteReceived:  SharedChannelInviteReceivedEvent{},
-	TeamJoin:                     TeamJoinEvent{},
-	TokensRevoked:                TokensRevokedEvent{},
-	EmojiChanged:                 EmojiChangedEvent{},
-	WorkflowStepExecute:          WorkflowStepExecuteEvent{},
-	MessageMetadataPosted:        MessageMetadataPostedEvent{},
-	MessageMetadataUpdated:       MessageMetadataUpdatedEvent{},
-	MessageMetadataDeleted:       MessageMetadataDeletedEvent{},
-	TeamAccessGranted:            TeamAccessGrantedEvent{},
-	TeamAccessRevoked:            TeamAccessRevokedEvent{},
-	UserProfileChanged:           UserProfileChangedEvent{},
-	ChannelHistoryChanged:        ChannelHistoryChangedEvent{},
-	DndUpdated:                   DndUpdatedEvent{},
-	DndUpdatedUser:               DndUpdatedUserEvent{},
-	EmailDomainChanged:           EmailDomainChangedEvent{},
-	GroupClose:                   GroupCloseEvent{},
-	GroupHistoryChanged:          GroupHistoryChangedEvent{},
-	GroupOpen:                    GroupOpenEvent{},
-	ImClose:                      ImCloseEvent{},
-	ImCreated:                    ImCreatedEvent{},
-	ImHistoryChanged:             ImHistoryChangedEvent{},
-	ImOpen:                       ImOpenEvent{},
-	SubteamCreated:               SubteamCreatedEvent{},
-	SubteamMembersChanged:        SubteamMembersChangedEvent{},
-	SubteamSelfAdded:             SubteamSelfAddedEvent{},
-	SubteamSelfRemoved:           SubteamSelfRemovedEvent{},
-	SubteamUpdated:               SubteamUpdatedEvent{},
-	TeamDomainChange:             TeamDomainChangeEvent{},
-	TeamRename:                   TeamRenameEvent{},
-	UserChange:                   UserChangeEvent{},
-	AppDeleted:                   AppDeletedEvent{},
-	AppInstalled:                 AppInstalledEvent{},
-	AppRequested:                 AppRequestedEvent{},
-	AppUninstalledTeam:           AppUninstalledTeamEvent{},
-	CallRejected:                 CallRejectedEvent{},
-	ChannelShared:                ChannelSharedEvent{},
-	FileCreated:                  FileCreatedEvent{},
-	FilePublic:                   FilePublicEvent{},
-	FunctionExecuted:             FunctionExecutedEvent{},
-	InviteRequested:              InviteRequestedEvent{},
-	SharedChannelInviteRequested: SharedChannelInviteRequestedEvent{},
-	StarAdded:                    StarAddedEvent{},
-	StarRemoved:                  StarRemovedEvent{},
-	UserHuddleChanged:            UserHuddleChangedEvent{},
-	UserStatusChanged:            UserStatusChangedEvent{},
+	AppMention:                    AppMentionEvent{},
+	AppHomeOpened:                 AppHomeOpenedEvent{},
+	AppUninstalled:                AppUninstalledEvent{},
+	AssistantThreadStarted:        AssistantThreadStartedEvent{},
+	AssistantThreadContextChanged: AssistantThreadContextChangedEvent{},
+	ChannelCreated:                ChannelCreatedEvent{},
+	ChannelDeleted:                ChannelDeletedEvent{},
+	ChannelArchive:                ChannelArchiveEvent{},
+	ChannelUnarchive:              ChannelUnarchiveEvent{},
+	ChannelLeft:                   ChannelLeftEvent{},
+	ChannelRename:                 ChannelRenameEvent{},
+	ChannelIDChanged:              ChannelIDChangedEvent{},
+	FileChange:                    FileChangeEvent{},
+	FileDeleted:                   FileDeletedEvent{},
+	FileShared:                    FileSharedEvent{},
+	FileUnshared:                  FileUnsharedEvent{},
+	GroupDeleted:                  GroupDeletedEvent{},
+	GroupArchive:                  GroupArchiveEvent{},
+	GroupUnarchive:                GroupUnarchiveEvent{},
+	GroupLeft:                     GroupLeftEvent{},
+	GroupRename:                   GroupRenameEvent{},
+	GridMigrationFinished:         GridMigrationFinishedEvent{},
+	GridMigrationStarted:          GridMigrationStartedEvent{},
+	LinkShared:                    LinkSharedEvent{},
+	Message:                       MessageEvent{},
+	MemberJoinedChannel:           MemberJoinedChannelEvent{},
+	MemberLeftChannel:             MemberLeftChannelEvent{},
+	PinAdded:                      PinAddedEvent{},
+	PinRemoved:                    PinRemovedEvent{},
+	ReactionAdded:                 ReactionAddedEvent{},
+	ReactionRemoved:               ReactionRemovedEvent{},
+	SharedChannelInviteApproved:   SharedChannelInviteApprovedEvent{},
+	SharedChannelInviteAccepted:   SharedChannelInviteAcceptedEvent{},
+	SharedChannelInviteDeclined:   SharedChannelInviteDeclinedEvent{},
+	SharedChannelInviteReceived:   SharedChannelInviteReceivedEvent{},
+	TeamJoin:                      TeamJoinEvent{},
+	TokensRevoked:                 TokensRevokedEvent{},
+	EmojiChanged:                  EmojiChangedEvent{},
+	MessageMetadataPosted:         MessageMetadataPostedEvent{},
+	MessageMetadataUpdated:        MessageMetadataUpdatedEvent{},
+	MessageMetadataDeleted:        MessageMetadataDeletedEvent{},
+	TeamAccessGranted:             TeamAccessGrantedEvent{},
+	TeamAccessRevoked:             TeamAccessRevokedEvent{},
+	UserProfileChanged:            UserProfileChangedEvent{},
+	ChannelHistoryChanged:         ChannelHistoryChangedEvent{},
+	DndUpdated:                    DndUpdatedEvent{},
+	DndUpdatedUser:                DndUpdatedUserEvent{},
+	EmailDomainChanged:            EmailDomainChangedEvent{},
+	GroupClose:                    GroupCloseEvent{},
+	GroupHistoryChanged:           GroupHistoryChangedEvent{},
+	GroupOpen:                     GroupOpenEvent{},
+	ImClose:                       ImCloseEvent{},
+	ImCreated:                     ImCreatedEvent{},
+	ImHistoryChanged:              ImHistoryChangedEvent{},
+	ImOpen:                        ImOpenEvent{},
+	SubteamCreated:                SubteamCreatedEvent{},
+	SubteamMembersChanged:         SubteamMembersChangedEvent{},
+	SubteamSelfAdded:              SubteamSelfAddedEvent{},
+	SubteamSelfRemoved:            SubteamSelfRemovedEvent{},
+	SubteamUpdated:                SubteamUpdatedEvent{},
+	TeamDomainChange:              TeamDomainChangeEvent{},
+	TeamRename:                    TeamRenameEvent{},
+	UserChange:                    UserChangeEvent{},
+	AppDeleted:                    AppDeletedEvent{},
+	AppInstalled:                  AppInstalledEvent{},
+	AppRequested:                  AppRequestedEvent{},
+	AppUninstalledTeam:            AppUninstalledTeamEvent{},
+	CallRejected:                  CallRejectedEvent{},
+	ChannelShared:                 ChannelSharedEvent{},
+	FileCreated:                   FileCreatedEvent{},
+	FilePublic:                    FilePublicEvent{},
+	FunctionExecuted:              FunctionExecutedEvent{},
+	InviteRequested:               InviteRequestedEvent{},
+	SharedChannelInviteRequested:  SharedChannelInviteRequestedEvent{},
+	StarAdded:                     StarAddedEvent{},
+	StarRemoved:                   StarRemovedEvent{},
+	UserHuddleChanged:             UserHuddleChangedEvent{},
+	UserStatusChanged:             UserStatusChangedEvent{},
 }
