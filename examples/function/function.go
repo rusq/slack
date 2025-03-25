@@ -39,7 +39,7 @@ func main() {
 						if callbackID == "sample_function" {
 							userId := ev.Inputs["user_id"]
 							payload := map[string]string{
-								"user_id": userId,
+								"user_id": userId.(string),
 							}
 
 							err := api.FunctionCompleteSuccess(ev.FunctionExecutionID, slack.FunctionCompleteSuccessRequestOptionOutput(payload))

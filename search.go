@@ -92,7 +92,7 @@ func NewSearchParameters() SearchParameters {
 	}
 }
 
-func (api *Client) _search(ctx context.Context, path, query string, params SearchParameters, files, messages bool) (response *searchResponseFull, error error) {
+func (api *Client) _search(ctx context.Context, path, query string, params SearchParameters) (response *searchResponseFull, error error) {
 	values := url.Values{
 		"token": {api.token},
 		"query": {query},
@@ -106,7 +106,7 @@ func (api *Client) _search(ctx context.Context, path, query string, params Searc
 	if params.SortDirection != DEFAULT_SEARCH_SORT_DIR {
 		values.Add("sort_dir", params.SortDirection)
 	}
-	if params.Highlight != DEFAULT_SEARCH_HIGHLIGHT {
+	if params.Highlight {
 		values.Add("highlight", strconv.Itoa(1))
 	}
 	if params.Count != DEFAULT_SEARCH_COUNT {
@@ -134,7 +134,7 @@ func (api *Client) Search(query string, params SearchParameters) (*SearchMessage
 }
 
 func (api *Client) SearchContext(ctx context.Context, query string, params SearchParameters) (*SearchMessages, *SearchFiles, error) {
-	response, err := api._search(ctx, "search.all", query, params, true, true)
+	response, err := api._search(ctx, "search.all", query, params)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -146,7 +146,7 @@ func (api *Client) SearchFiles(query string, params SearchParameters) (*SearchFi
 }
 
 func (api *Client) SearchFilesContext(ctx context.Context, query string, params SearchParameters) (*SearchFiles, error) {
-	response, err := api._search(ctx, "search.files", query, params, true, false)
+	response, err := api._search(ctx, "search.files", query, params)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (api *Client) SearchMessages(query string, params SearchParameters) (*Searc
 }
 
 func (api *Client) SearchMessagesContext(ctx context.Context, query string, params SearchParameters) (*SearchMessages, error) {
-	response, err := api._search(ctx, "search.messages", query, params, false, true)
+	response, err := api._search(ctx, "search.messages", query, params)
 	if err != nil {
 		return nil, err
 	}
