@@ -63,8 +63,8 @@ type Attachment struct {
 	Color    string `json:"color,omitempty"`
 	Fallback string `json:"fallback,omitempty"`
 
-	CallbackID string `json:"callback_id,omitempty"`
-	ID         int    `json:"id,omitempty"`
+	CallbackID string       `json:"callback_id,omitempty"`
+	ID         AttachmentID `json:"id,omitempty"`
 
 	AuthorID      string `json:"author_id,omitempty"`
 	AuthorName    string `json:"author_name,omitempty"`
