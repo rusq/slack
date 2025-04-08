@@ -96,6 +96,18 @@ func TestAttachmentID_MarshalJSON(t *testing.T) {
 			want:    []byte(`1234567890`),
 			wantErr: false,
 		},
+		{
+			name:    "just $",
+			a:       attachmentIDPtr("$"),
+			want:    []byte(`"$"`),
+			wantErr: false,
+		},
+		{
+			name:    "a string ending with $",
+			a:       attachmentIDPtr("have some $"),
+			want:    []byte(`"have some $"`),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

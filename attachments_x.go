@@ -40,13 +40,13 @@ func (a *AttachmentID) MarshalJSON() ([]byte, error) {
 	if len(*a) == 0 {
 		return []byte("null"), nil
 	}
-	if (*a)[len(*a)-1] == '$' {
+	if (*a)[len(*a)-1] == '$' && len(*a) > 1 {
 		// attempt to convert to integer
 		var n int64
-		if _, err := fmt.Sscanf(string(*a), "%d$", &n); err != nil {
-			return nil, err
+		if _, err := fmt.Sscanf(string(*a), "%d$", &n); err == nil {
+			return json.Marshal(n)
 		}
-		return json.Marshal(n)
+		// if it fails, return as string
 	}
 	// otherwise, return as string
 	return json.Marshal(string(*a))
