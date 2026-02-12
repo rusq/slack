@@ -5,18 +5,20 @@ package slack
 type MessageBlockType string
 
 const (
-	MBTSection  MessageBlockType = "section"
-	MBTDivider  MessageBlockType = "divider"
-	MBTImage    MessageBlockType = "image"
-	MBTAction   MessageBlockType = "actions"
-	MBTContext  MessageBlockType = "context"
-	MBTFile     MessageBlockType = "file"
-	MBTInput    MessageBlockType = "input"
-	MBTHeader   MessageBlockType = "header"
-	MBTRichText MessageBlockType = "rich_text"
-	MBTCall     MessageBlockType = "call"
-	MBTVideo    MessageBlockType = "video"
-	MBTMarkdown MessageBlockType = "markdown"
+	MBTSection        MessageBlockType = "section"
+	MBTDivider        MessageBlockType = "divider"
+	MBTImage          MessageBlockType = "image"
+	MBTAction         MessageBlockType = "actions"
+	MBTContext        MessageBlockType = "context"
+	MBTContextActions MessageBlockType = "context_actions"
+	MBTFile           MessageBlockType = "file"
+	MBTInput          MessageBlockType = "input"
+	MBTHeader         MessageBlockType = "header"
+	MBTRichText       MessageBlockType = "rich_text"
+	MBTCall           MessageBlockType = "call"
+	MBTVideo          MessageBlockType = "video"
+	MBTMarkdown       MessageBlockType = "markdown"
+	MBTTable          MessageBlockType = "table"
 )
 
 // Block defines an interface all block types should implement
@@ -52,6 +54,7 @@ type BlockAction struct {
 	SelectedDate          string              `json:"selected_date"`
 	SelectedTime          string              `json:"selected_time"`
 	SelectedDateTime      int64               `json:"selected_date_time"`
+	Timezone              string              `json:"timezone"`
 	InitialOption         OptionBlockObject   `json:"initial_option"`
 	InitialUser           string              `json:"initial_user"`
 	InitialChannel        string              `json:"initial_channel"`

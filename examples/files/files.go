@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	token, ok := os.LookupEnv("SLACK_BOT_TOKEN")
-	if !ok {
-		fmt.Println("Missing SLACK_BOT_TOKEN in environment")
+	token := os.Getenv("SLACK_BOT_TOKEN")
+	if token == "" {
+		fmt.Println("SLACK_BOT_TOKEN environment variable is required")
 		os.Exit(1)
 	}
 	api := slack.New(token, slack.OptionDebug(true))
@@ -19,13 +19,13 @@ func main() {
 	ctx := context.Background()
 
 	// Upload a file
-	params := slack.UploadFileV2Parameters{
+	params := slack.UploadFileParameters{
 		Title:    "Batman Example",
 		Filename: "example.txt",
 		File:     "example.txt",
 		FileSize: 38,
 	}
-	file, err := api.UploadFileV2Context(ctx, params)
+	file, err := api.UploadFileContext(ctx, params)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return
