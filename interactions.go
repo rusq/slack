@@ -3,6 +3,8 @@ package slack
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"net/http"
 )
 
 // InteractionType type of interactions
@@ -61,7 +63,7 @@ type InteractionCallback struct {
 	ViewClosedCallback
 
 	// FIXME(kanata2): just workaround for backward-compatibility.
-	// See also https://github.com/slack-go/slack/issues/816
+	// See also https://github.com/rusq/slack/issues/816
 	RawState json.RawMessage `json:"state,omitempty"`
 
 	// BlockActionState stands for the `state` field in block_actions type.
@@ -72,6 +74,24 @@ type InteractionCallback struct {
 
 type BlockActionStates struct {
 	Values map[string]map[string]BlockAction `json:"values"`
+}
+
+// InteractionCallbackParse parses the HTTP form value "payload" from r, unmarshals
+// it as JSON into an InteractionCallback, and returns the result.
+// It returns an error if the payload is missing or cannot be decoded.
+//
+// See https://github.com/rusq/slack/issues/660 for context.
+func InteractionCallbackParse(r *http.Request) (InteractionCallback, error) {
+	payload := r.FormValue("payload")
+	if len(payload) == 0 {
+		return InteractionCallback{}, errors.New("payload is empty")
+	}
+
+	var ic InteractionCallback
+	if err := json.Unmarshal([]byte(payload), &ic); err != nil {
+		return InteractionCallback{}, err
+	}
+	return ic, nil
 }
 
 func (ic *InteractionCallback) MarshalJSON() ([]byte, error) {

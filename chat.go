@@ -68,6 +68,9 @@ type PostMessageParameters struct {
 
 	// chat metadata support
 	MetaData SlackMetadata `json:"metadata"`
+
+	// file_ids support
+	FileIDs []string `json:"file_ids,omitempty"`
 }
 
 // NewPostMessageParameters provides an instance of PostMessageParameters with all the sane default values set
@@ -116,13 +119,13 @@ func (api *Client) ScheduleMessage(channelID, postAt string, options ...MsgOptio
 // ScheduleMessageContext sends a message to a channel with a custom context.
 // Slack API docs: https://api.slack.com/methods/chat.scheduleMessage
 func (api *Client) ScheduleMessageContext(ctx context.Context, channelID, postAt string, options ...MsgOption) (string, string, error) {
-	respChannel, scheduledMessageId, _, err := api.SendMessageContext(
+	respChannel, scheduledMessageID, _, err := api.SendMessageContext(
 		ctx,
 		channelID,
 		MsgOptionSchedule(postAt),
 		MsgOptionCompose(options...),
 	)
-	return respChannel, scheduledMessageId, err
+	return respChannel, scheduledMessageID, err
 }
 
 // PostMessage sends a message to a channel.
@@ -214,7 +217,7 @@ func (api *Client) SendMessage(channel string, options ...MsgOption) (string, st
 
 // SendMessageContext more flexible method for configuring messages with a custom context.
 // Slack API docs: https://api.slack.com/methods/chat.postMessage
-func (api *Client) SendMessageContext(ctx context.Context, channelID string, options ...MsgOption) (_channel string, _timestampOrScheduledMessageId string, _text string, err error) {
+func (api *Client) SendMessageContext(ctx context.Context, channelID string, options ...MsgOption) (_channel string, _timestampOrScheduledMessageID string, _text string, err error) {
 	var (
 		req      *http.Request
 		parser   func(*chatResponseFull) responseParser
@@ -304,6 +307,9 @@ const (
 	chatResponse        sendMode = "chat.responseURL"
 	chatMeMessage       sendMode = "chat.meMessage"
 	chatUnfurl          sendMode = "chat.unfurl"
+	chatStartStream     sendMode = "chat.startStream"
+	chatAppendStream    sendMode = "chat.appendStream"
+	chatStopStream      sendMode = "chat.stopStream"
 )
 
 type sendConfig struct {
@@ -715,6 +721,73 @@ func MsgOptionLinkNames(linkName bool) MsgOption {
 	}
 }
 
+// MsgOptionFileIDs sets file IDs for the message
+func MsgOptionFileIDs(fileIDs []string) MsgOption {
+	return func(config *sendConfig) error {
+		if len(fileIDs) == 0 {
+			return nil
+		}
+
+		fileIDsBytes, err := json.Marshal(fileIDs)
+		if err != nil {
+			return err
+		}
+
+		config.values.Set("file_ids", string(fileIDsBytes))
+		return nil
+	}
+}
+
+// MsgOptionStartStream starts a streaming message.
+func MsgOptionStartStream() MsgOption {
+	return func(config *sendConfig) error {
+		config.endpoint = config.apiurl + string(chatStartStream)
+		return nil
+	}
+}
+
+// MsgOptionAppendStream appends to a streaming message.
+func MsgOptionAppendStream(timestamp string) MsgOption {
+	return func(config *sendConfig) error {
+		config.endpoint = config.apiurl + string(chatAppendStream)
+		config.values.Add("ts", timestamp)
+		return nil
+	}
+}
+
+// MsgOptionStopStream stops a streaming message.
+func MsgOptionStopStream(timestamp string) MsgOption {
+	return func(config *sendConfig) error {
+		config.endpoint = config.apiurl + string(chatStopStream)
+		config.values.Add("ts", timestamp)
+		return nil
+	}
+}
+
+// MsgOptionRecipientTeamID sets the recipient team ID for streaming messages.
+func MsgOptionRecipientTeamID(teamID string) MsgOption {
+	return func(config *sendConfig) error {
+		config.values.Set("recipient_team_id", teamID)
+		return nil
+	}
+}
+
+// MsgOptionRecipientUserID sets the recipient user ID for streaming messages.
+func MsgOptionRecipientUserID(userID string) MsgOption {
+	return func(config *sendConfig) error {
+		config.values.Set("recipient_user_id", userID)
+		return nil
+	}
+}
+
+// MsgOptionMarkdownText sets the markdown text for streaming messages.
+func MsgOptionMarkdownText(text string) MsgOption {
+	return func(config *sendConfig) error {
+		config.values.Set("markdown_text", text)
+		return nil
+	}
+}
+
 // UnsafeMsgOptionEndpoint deliver the message to the specified endpoint.
 // NOTE: USE AT YOUR OWN RISK: No issues relating to the use of this Option
 // will be supported by the library, it is subject to change without notice that
@@ -776,6 +849,16 @@ func MsgOptionPostMessageParameters(params PostMessageParameters) MsgOption {
 		}
 		if params.ReplyBroadcast != DEFAULT_MESSAGE_REPLY_BROADCAST {
 			config.values.Set("reply_broadcast", "true")
+		}
+
+		if params.MetaData.EventType != "" {
+			if err := MsgOptionMetadata(params.MetaData)(config); err != nil {
+				return err
+			}
+		}
+
+		if len(params.FileIDs) > 0 {
+			return MsgOptionFileIDs(params.FileIDs)(config)
 		}
 
 		return nil
@@ -899,4 +982,58 @@ func (api *Client) DeleteScheduledMessageContext(ctx context.Context, params *De
 	}
 
 	return response.Ok, response.Err()
+}
+
+// StartStream starts a streaming message in a channel.
+// For more details, see StartStreamContext documentation.
+func (api *Client) StartStream(channelID string, options ...MsgOption) (string, string, error) {
+	return api.StartStreamContext(context.Background(), channelID, options...)
+}
+
+// StartStreamContext starts a streaming message in a channel with a custom context.
+// Slack API docs: https://api.slack.com/methods/chat.startStream
+func (api *Client) StartStreamContext(ctx context.Context, channelID string, options ...MsgOption) (string, string, error) {
+	respChannel, respTimestamp, _, err := api.SendMessageContext(
+		ctx,
+		channelID,
+		MsgOptionStartStream(),
+		MsgOptionCompose(options...),
+	)
+	return respChannel, respTimestamp, err
+}
+
+// AppendStream appends text to a streaming message.
+// For more details, see AppendStreamContext documentation.
+func (api *Client) AppendStream(channelID, timestamp string, options ...MsgOption) (string, string, error) {
+	return api.AppendStreamContext(context.Background(), channelID, timestamp, options...)
+}
+
+// AppendStreamContext appends text to a streaming message with a custom context.
+// Slack API docs: https://api.slack.com/methods/chat.appendStream
+func (api *Client) AppendStreamContext(ctx context.Context, channelID, timestamp string, options ...MsgOption) (string, string, error) {
+	respChannel, respTimestamp, _, err := api.SendMessageContext(
+		ctx,
+		channelID,
+		MsgOptionAppendStream(timestamp),
+		MsgOptionCompose(options...),
+	)
+	return respChannel, respTimestamp, err
+}
+
+// StopStream stops a streaming message.
+// For more details, see StopStreamContext documentation.
+func (api *Client) StopStream(channelID, timestamp string, options ...MsgOption) (string, string, error) {
+	return api.StopStreamContext(context.Background(), channelID, timestamp, options...)
+}
+
+// StopStreamContext stops a streaming message with a custom context.
+// Slack API docs: https://api.slack.com/methods/chat.stopStream
+func (api *Client) StopStreamContext(ctx context.Context, channelID, timestamp string, options ...MsgOption) (string, string, error) {
+	respChannel, respTimestamp, _, err := api.SendMessageContext(
+		ctx,
+		channelID,
+		MsgOptionStopStream(timestamp),
+		MsgOptionCompose(options...),
+	)
+	return respChannel, respTimestamp, err
 }

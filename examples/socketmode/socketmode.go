@@ -6,31 +6,32 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rusq/slack/socketmode"
-
 	"github.com/rusq/slack"
 	"github.com/rusq/slack/slackevents"
+	"github.com/rusq/slack/socketmode"
 )
 
 func main() {
 	appToken := os.Getenv("SLACK_APP_TOKEN")
 	if appToken == "" {
-		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must be set.\n")
+		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN environment variable is required\n")
 		os.Exit(1)
 	}
 
 	if !strings.HasPrefix(appToken, "xapp-") {
-		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\".")
+		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must have the prefix \"xapp-\"\n")
+		os.Exit(1)
 	}
 
 	botToken := os.Getenv("SLACK_BOT_TOKEN")
 	if botToken == "" {
-		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must be set.\n")
+		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN environment variable is required\n")
 		os.Exit(1)
 	}
 
 	if !strings.HasPrefix(botToken, "xoxb-") {
-		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\"\n")
+		os.Exit(1)
 	}
 
 	api := slack.New(

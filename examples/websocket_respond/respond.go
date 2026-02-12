@@ -2,15 +2,21 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/rusq/slack"
 )
 
 func main() {
-	api := slack.New(
-		"YOUR-TOKEN-HERE",
-	)
+	// Get token from environment variable
+	token := os.Getenv("SLACK_BOT_TOKEN")
+	if token == "" {
+		fmt.Println("SLACK_BOT_TOKEN environment variable is required")
+		os.Exit(1)
+	}
+
+	api := slack.New(token)
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
